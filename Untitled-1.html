@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Пасьянс Ортинка</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #0a1120;
+      color: white;
+      margin: 0;
+      padding: 20px;
+      background-image: url('shkola_ort.PNG'); /* Replace with your photo filename */
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      position: relative;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(10, 17, 32, 0.7); /* dark overlay */
+      z-index: 0;
+      pointer-events: none;
+    }
+    body, #game-area, #deck-area, #foundation-area, #tableau-area {
+      position: relative;
+      z-index: 1;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: white !important;
+      text-shadow: 0 2px 8px #000, 0 0 2px #000;
+    }
+    #game-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    #deck-area {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    .pile {
+      width: 80px;
+      height: 120px;
+      background: #ccc;
+      border: 2px solid white;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: black;
+    }
+    #foundation-area {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      max-width: 500px;
+      margin-bottom: 20px;
+    }
+    .foundation {
+      width: 80px;
+      height: 120px;
+      border: 2px solid white;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #333;
+      font-size: 24px;
+      color: #999;
+    }
+    #tableau-area {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .column {
+      width: 80px;
+      min-height: 120px;
+      border: 1px dashed rgb(116, 0, 161);
+      border-radius: 8px;
+      padding: 5px;
+      background-color: rgba(0, 169, 175, 0.1);
+    }
+    .card {
+      width: 100%;
+      height: 110px;
+      background-color: rgb(255, 255, 255);
+      margin-bottom: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      cursor: grab;
+      font-weight: bold;
+      font-size: 28px;
+      position: relative;
+    }
+    .red {
+      color: red;
+    }
+    .black {
+      color: black;
+    }
+    .facedown {
+      background-color: #444;
+      color: transparent;
+      cursor: default;
+    }
+  </style>
+</head>
+<body>
+  <h1>Пасьянс "Косинка"</h1>
+  <div id="game-area">
+    <div id="deck-area">
+      <div id="draw-pile" class="pile">Колода</div>
+      <div id="waste-pile" class="pile">Відбій</div>
+    </div>
+    <div id="foundation-area">
+      <div class="foundation" data-suit="♠">♠</div>
+      <div class="foundation" data-suit="♣">♣</div>
+      <div class="foundation" data-suit="♥">♥</div>
+      <div class="foundation" data-suit="♦">♦</div>
+    </div>
+    <div id="tableau-area"></div>
+  </div>
+  <script>
+    const suits = ['♠', '♣', '♥', '♦'];
+    const values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+
+    function createDeck() {
+      const deck = [];
+      for (let suit of suits) {
+        for (let value of values) {
+          deck.push({ suit, value });
+        }
+      }
+      return deck;
+    }
+
+    function shuffle(deck) {
+      for (let i = deck.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [deck[i], deck[j]] = [deck[j], deck[i]];
+      }
+      return deck;
+    }
+
+    function isRed(suit) {
+      return suit === '♥' || suit === '♦';
+    }
+
+    function buildCard(card, faceUp = true) {
+      const cardEl = document.createElement('div');
+      cardEl.classList.add('card');
+      cardEl.dataset.value = card.value;
+      cardEl.dataset.suit = card.suit;
+      cardEl.dataset.id = Math.random().toString(36).substr(2, 9);
+      if (faceUp) {
+        // Add custom SVG for K, Q, J
+        let faceArt = '';
+        if (card.value === 'K') {
+          faceArt = `<img src="i6SE5IvcwjchF3cTdUZ0-removebg-preview.png" style="height:60px;display:block;margin:auto;" />`;
+        } else if (card.value === 'Q') {
+          faceArt = `<img src="Q20NsWXbAiETHAubUvTL-removebg-preview.png" style="height:60px;display:block;margin:auto;" />`;
+        } else if (card.value === 'J') {
+          faceArt = `<img src="IMG_20250514_223919-removebg-preview.png" style="height:60px;display:block;margin:auto;" />`;
+        }
+        cardEl.innerHTML =
+          faceArt
+            ? `<div style='position:absolute;top:6px;left:8px;font-size:18px;'>${card.value} ${card.suit}</div>` +
+              `<div style='display:flex;align-items:center;justify-content:center;height:100%;'>${faceArt}</div>` +
+              `<div style='position:absolute;bottom:6px;right:8px;font-size:18px;transform:rotate(180deg);'>${card.value} ${card.suit}</div>`
+            : `${card.value} ${card.suit}`;
+        cardEl.classList.add(isRed(card.suit) ? 'red' : 'black');
+        cardEl.draggable = true;
+        cardEl.addEventListener('dragstart', handleDragStart);
+      } else {
+        cardEl.classList.add('facedown');
+        cardEl.innerHTML = `<img src="images.png" style="width:60px;height:30px;display:block;margin:auto;opacity:0.85;" />`;
+      }
+      return cardEl;
+    }
+
+    function buildTableau(deck) {
+      const tableau = document.getElementById('tableau-area');
+      for (let i = 0; i < 7; i++) {
+        const column = document.createElement('div');
+        column.classList.add('column');
+        column.addEventListener('dragover', e => e.preventDefault());
+        column.addEventListener('drop', handleDrop);
+
+        for (let j = 0; j <= i; j++) {
+          const faceUp = j === i;
+          const card = deck.pop();
+          const cardEl = buildCard(card, faceUp);
+          column.appendChild(cardEl);
+        }
+        tableau.appendChild(column);
+      }
+    }
+
+    function buildFoundations() {
+      document.querySelectorAll('.foundation').forEach(foundation => {
+        foundation.addEventListener('dragover', e => e.preventDefault());
+        foundation.addEventListener('drop', handleDropToFoundation);
+      });
+    }
+
+    function cardValueIndex(value) {
+      return values.indexOf(value);
+    }
+
+    function handleDragStart(e) {
+      if (e.target.classList.contains('facedown')) {
+        e.preventDefault();
+        return;
+      }
+      const sourceColumn = e.target.parentElement;
+      const cards = Array.from(sourceColumn.children);
+      const index = cards.indexOf(e.target);
+      const draggedGroup = cards.slice(index);
+      e.dataTransfer.setData('ids', JSON.stringify(draggedGroup.map(c => c.dataset.id)));
+      e.dataTransfer.setData('value', e.target.dataset.value);
+      e.dataTransfer.setData('suit', e.target.dataset.suit);
+    }
+
+    function handleDrop(e) {
+      e.preventDefault();
+      const ids = JSON.parse(e.dataTransfer.getData('ids'));
+      const value = e.dataTransfer.getData('value');
+      const suit = e.dataTransfer.getData('suit');
+      const target = e.target.closest('.column');
+      const lastCard = target.lastElementChild;
+
+      if (!lastCard ||
+          (cardValueIndex(value) === cardValueIndex(lastCard.dataset.value) - 1 &&
+          isRed(suit) !== isRed(lastCard.dataset.suit))) {
+
+        const draggedGroup = ids.map(id => document.querySelector(`[data-id='${id}']`));
+        const sourceColumn = draggedGroup[0].parentElement;
+
+        draggedGroup.forEach(card => {
+          // Remove from waste if moving from waste pile
+          if (card.parentElement && card.parentElement.id === 'waste-pile') {
+            const idx = waste.findIndex(wc => wc.value === card.dataset.value && wc.suit === card.dataset.suit);
+            if (idx !== -1) waste.splice(idx, 1);
+            wastePile.innerHTML = '';
+          }
+          target.appendChild(card);
+        });
+
+        // Reveal card under the moved group, if any
+        const cardsLeft = Array.from(sourceColumn.children);
+        for (let i = cardsLeft.length - 1; i >= 0; i--) {
+          if (cardsLeft[i].classList.contains('facedown')) {
+            // Replace with a new card element to preserve images/SVGs
+            const cardData = { value: cardsLeft[i].dataset.value, suit: cardsLeft[i].dataset.suit };
+            const newCard = buildCard(cardData, true);
+            sourceColumn.replaceChild(newCard, cardsLeft[i]);
+            break;
+          }
+        }
+      }
+    }
+
+    function checkWinCondition() {
+      const foundations = document.querySelectorAll('.foundation');
+      let win = true;
+      foundations.forEach(foundation => {
+        const cards = foundation.querySelectorAll('.card');
+        if (cards.length !== 13) win = false;
+      });
+      if (win) {
+        showWinOverlay();
+      }
+    }
+
+    function showWinOverlay() {
+      if (document.getElementById('win-overlay')) return;
+      const overlay = document.createElement('div');
+      overlay.id = 'win-overlay';
+      overlay.style.position = 'fixed';
+      overlay.style.top = 0;
+      overlay.style.left = 0;
+      overlay.style.width = '100vw';
+      overlay.style.height = '100vh';
+      overlay.style.background = 'rgba(0,0,0,0.8)';
+      overlay.style.display = 'flex';
+      overlay.style.alignItems = 'center';
+      overlay.style.justifyContent = 'center';
+      overlay.style.zIndex = 1000;
+      overlay.innerHTML = `<div style="background:#222;padding:40px 60px;border-radius:20px;box-shadow:0 0 30px #000;text-align:center;">
+        <h2 style='color:#fff;font-size:2.5em;margin-bottom:20px;'>Вітаємо! Ви виграли!</h2>
+        <button id='restart-btn' style='font-size:1.2em;padding:10px 30px;border-radius:8px;border:none;background:#0aa9af;color:#fff;cursor:pointer;'>Грати ще раз</button>
+      </div>`;
+      document.body.appendChild(overlay);
+      document.getElementById('restart-btn').onclick = () => window.location.reload();
+    }
+
+    function handleDropToFoundation(e) {
+      e.preventDefault();
+      const id = JSON.parse(e.dataTransfer.getData('ids'))[0];
+      const value = e.dataTransfer.getData('value');
+      const suit = e.dataTransfer.getData('suit');
+      const foundation = e.target.closest('.foundation');
+      const dragged = document.querySelector(`[data-id='${id}']`);
+
+      if (foundation.dataset.suit === suit) {
+        const lastCard = foundation.lastElementChild;
+        const expectedIndex = lastCard && lastCard.classList.contains('card') ? cardValueIndex(lastCard.dataset.value) + 1 : 0;
+
+        if (cardValueIndex(value) === expectedIndex) {
+          // Find the source column before removing the card
+          const sourceColumn = dragged.parentElement.classList.contains('column') ? dragged.parentElement : null;
+          // Remove from waste if moving from waste pile
+          if (dragged.parentElement && dragged.parentElement.id === 'waste-pile') {
+            const idx = waste.findIndex(wc => wc.value === dragged.dataset.value && wc.suit === dragged.dataset.suit);
+            if (idx !== -1) waste.splice(idx, 1);
+            wastePile.innerHTML = '';
+          }
+          dragged.remove();
+          foundation.appendChild(dragged);
+          // Reveal next facedown card in the source column
+          if (sourceColumn) {
+            const cardsLeft = Array.from(sourceColumn.children);
+            for (let i = cardsLeft.length - 1; i >= 0; i--) {
+              if (cardsLeft[i].classList.contains('facedown')) {
+                // Replace with a new card element to preserve images/SVGs
+                const cardData = { value: cardsLeft[i].dataset.value, suit: cardsLeft[i].dataset.suit };
+                const newCard = buildCard(cardData, true);
+                sourceColumn.replaceChild(newCard, cardsLeft[i]);
+                break;
+              }
+            }
+          }
+          // Check for win after successful move to foundation
+          checkWinCondition();
+        }
+      }
+    }
+
+    let deck, waste, drawPile, wastePile;
+    document.addEventListener('DOMContentLoaded', () => {
+      deck = shuffle(createDeck());
+      buildTableau(deck);
+      buildFoundations();
+
+      drawPile = document.getElementById('draw-pile');
+      wastePile = document.getElementById('waste-pile');
+      waste = [];
+
+      drawPile.addEventListener('click', () => {
+        if (deck.length === 0) {
+          // If deck is empty, reset from waste
+          if (waste.length === 0) return;
+          deck = waste.reverse();
+          waste = [];
+          wastePile.innerHTML = '';
+          drawPile.textContent = 'Колода';
+          return;
+        }
+        const card = deck.pop();
+        waste.push(card);
+        wastePile.innerHTML = '';
+        const cardEl = buildCard(card);
+        wastePile.appendChild(cardEl);
+        if (deck.length === 0) {
+          drawPile.textContent = '↺';
+        }
+      });
+    });
+  </script>
+</body>
+</html>
