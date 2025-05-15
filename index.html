@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ласкаво прошу до мого проєкту</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+        }
+        header, section {
+            width: 80%;
+            max-width: 600px;
+            margin: 30px auto;
+            background: rgba(255,255,255,0.85);
+            border: 2px solid #7b2ff2;
+            border-radius: 18px;
+            box-shadow: 0 4px 16px rgba(123,47,242,0.08);
+            padding: 24px 32px;
+            text-align: center;
+        }
+        h1, h2 {
+            color: #7b2ff2;
+            margin-bottom: 16px;
+        }
+        p, li {
+            color: #222;
+            font-size: 1.1em;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+        li {
+            margin-bottom: 8px;
+        }
+        button {
+            background: #7b2ff2;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 28px;
+            font-size: 1em;
+            cursor: pointer;
+            margin-top: 16px;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #f357a8;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Ласкаво прошу до мого проєкту</h1>
+    </header>
+
+    <section id="about">
+        <h2>Про мене</h2>
+        <p>Мене звати Жоров Єгор. Я - учень курсу інформатики, який:</p>
+        <ul>
+            <li>Вивчає основи програмування</li>
+            <li>Практикується у розробці творчих проєктів</li>
+            <li>Опановує сучасні технології та інструменти для створення інтерактивних програм</li>
+        </ul>
+    </section>
+
+    <section id="projects">
+        <h2>Проєкти</h2>
+        <ul>
+            <li>
+                <p>Цей проєкт був створений лише використовуючи HTML</p>
+            </li>
+        </ul>
+        <button onclick="window.location.href='Untitled-1.html'">Відкрити Косинку</button>
+    </section>
+
+</body>
+</html>
